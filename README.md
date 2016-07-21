@@ -1,7 +1,7 @@
-dnshistory-grab
+portalgraphics-grab
 =============
 
-More information about the archiving project can be found on the ArchiveTeam wiki: [DNS History](http://archiveteam.org/index.php?title=DNS_History)
+More information about the archiving project can be found on the ArchiveTeam wiki: [Portalgraphics.net](http://archiveteam.org/index.php?title=Portalgraphics.net)
 
 Setup instructions
 =========================
@@ -58,8 +58,8 @@ Distribution-specific setup
     adduser --system --group --shell /bin/bash archiveteam
     apt-get update && apt-get install -y git-core libgnutls-dev lua5.1 liblua5.1-0 liblua5.1-0-dev screen python-dev python-pip bzip2 zlib1g-dev
     pip install --upgrade seesaw
-    su -c "cd /home/archiveteam; git clone https://github.com/ArchiveTeam/dnshistory-grab.git; cd dnshistory-grab; ./get-wget-lua.sh" archiveteam
-    screen su -c "cd /home/archiveteam/dnshistory-grab/; run-pipeline pipeline.py --concurrent 2 --address '127.0.0.1' YOURNICKHERE" archiveteam
+    su -c "cd /home/archiveteam; git clone https://github.com/ArchiveTeam/portalgraphics-grab.git; cd portalgraphics-grab; ./get-wget-lua.sh" archiveteam
+    screen su -c "cd /home/archiveteam/portalgraphics-grab/; run-pipeline pipeline.py --concurrent 2 --address '127.0.0.1' YOURNICKHERE" archiveteam
     [... ctrl+A D to detach ...]
 
 In __Debian Jessie__, the `libgnutls-dev` package was renamed to `libgnutls28-dev`. So, you need to do the following instead:
@@ -92,7 +92,7 @@ You need Homebrew. Ensure that you have the OS X equivalent of bzip2 installed a
     pip install --upgrade seesaw
     [... pretty much the same as above ...]
 
-**There is a known issue with some packaged versions of rsync. If you get errors during the upload stage, dnshistory-grab will not work with your rsync version.**
+**There is a known issue with some packaged versions of rsync. If you get errors during the upload stage, portalgraphics-grab will not work with your rsync version.**
 
 This supposedly fixes it:
 
@@ -107,7 +107,7 @@ Ensure that you have the Arch equivalent of bzip2 installed as well.
 3. Run `pip2 install --upgrade seesaw`.
 4. Modify the run-pipeline script in seesaw to point at `#!/usr/bin/python2` instead of `#!/usr/bin/python`.
 5. `useradd --system --group users --shell /bin/bash --create-home archiveteam`
-6. `screen su -c "cd /home/archiveteam/dnshistory-grab/; run-pipeline pipeline.py --concurrent 2 --address '127.0.0.1' YOURNICKHERE" archiveteam`
+6. `screen su -c "cd /home/archiveteam/portalgraphics-grab/; run-pipeline pipeline.py --concurrent 2 --address '127.0.0.1' YOURNICKHERE" archiveteam`
 
 ### For FreeBSD:
 
@@ -154,4 +154,4 @@ Are you a developer? Help write code for us! Look at our [developer documentatio
 
 ### Other problems
 
-Have an issue not listed here? Join us on IRC and ask! We can be found at irc.efnet.org #greatlookup.
+Have an issue not listed here? Join us on IRC and ask! We can be found at irc.efnet.org #archiveteam.

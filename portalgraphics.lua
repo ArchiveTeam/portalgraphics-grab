@@ -5,12 +5,9 @@ local url_count = 0
 local tries = 0
 local item_type = os.getenv('item_type')
 local item_value = os.getenv('item_value')
-local item_tld = os.getenv('item_tld')
-local item_dir = os.getenv('item_dir')
 
 local downloaded = {}
 local addedtolist = {}
-local domains = {}
 
 for ignore in io.open("ignore-list", "r"):lines() do
   downloaded[ignore] = true
@@ -27,28 +24,10 @@ read_file = function(file)
   end
 end
 
-fix_domain = function(domain)
-  if string.match(domain, "(.+)%.$") then
-    domain = string.match(domain, "(.+)%.$")
-  end
-  domain = string.match(domain, "([^%.]+%.[^%.]+)$")
-  return domain
-end
-
-get_domains = function(html)
-  for domain in string.gmatch(html, '"/dns%-records/([^"]+)"') do
-    domain = fix_domain(domain)
-    domains[domain] = true
-  end
-end
-
 allowed = function(url)
-  if string.match(url, "^https?://[^/]*dnshistory%.org/.+") then
-    for part in string.gmatch(string.match(url, "^https?://[^/]+/(.+)"), "([^/]+)") do
-      part = fix_domain(part)
-      if domains[part] then
-        return true
-      end
+  for num in string.gmatch(url, "([0-9]+)") do
+    if num == item_value and string.match(url, "portalgraphics%.net") then
+      return true
     end
   end
   return false
@@ -103,12 +82,15 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       check(string.match(url, "^(https?://.+/)")..newurl)
     end
   end
+
+  if string.match(url, "&lang=[a-z][a-z]") then
+    check(string.gsub(url, "&lang=[a-z][a-z]", "&lang=ja"))
+    check(string.gsub(url, "&lang=[a-z][a-z]", "&lang=en"))
+    check(string.gsub(url, "&lang=[a-z][a-z]", ""))
+  end
   
-  if allowed(url) or string.match(url, "^https://dnshistory.org/subdomains/[0-9]+/"..item_tld.."$") then
+  if allowed(url) then
     html = read_file(file)
-    if string.match(url, "^https://dnshistory.org/subdomains/[0-9]+/"..item_tld.."$") then
-      get_domains(html)
-    end
     for newurl in string.gmatch(html, '([^"]+)') do
       checknewurl(newurl)
     end
@@ -159,7 +141,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   end
   
   if status_code >= 500 or
-    (status_code >= 300 and status_code ~= 404) or
+    (status_code >= 400 and status_code ~= 404) or
     status_code == 0 then
     io.stdout:write("Server returned "..http_stat.statcode.." ("..err.."). Sleeping.\n")
     io.stdout:flush()
@@ -169,7 +151,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
       io.stdout:write("\nI give up...\n")
       io.stdout:flush()
       tries = 0
-      if allowed(url["url"]) or string.match(url["url"], "^https://dnshistory.org/subdomains/[0-9]+/"..item_tld.."$") then
+      if allowed(url["url"]) then
         return wget.actions.ABORT
       else
         return wget.actions.EXIT

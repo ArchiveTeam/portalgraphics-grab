@@ -58,9 +58,9 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20160704.05"
+VERSION = "20160721.01"
 USER_AGENT = 'ArchiveTeam'
-TRACKER_ID = 'dnshistory'
+TRACKER_ID = 'portalgraphics'
 TRACKER_HOST = 'tracker.archiveteam.org'
 
 
@@ -147,7 +147,7 @@ def get_hash(filename):
 
 CWD = os.getcwd()
 PIPELINE_SHA1 = get_hash(os.path.join(CWD, 'pipeline.py'))
-LUA_SHA1 = get_hash(os.path.join(CWD, 'dnshistory.lua'))
+LUA_SHA1 = get_hash(os.path.join(CWD, 'portalgraphics.lua'))
 
 
 def stats_id_function(item):
@@ -167,7 +167,8 @@ class WgetArgs(object):
             WGET_LUA,
             "-U", USER_AGENT,
             "-nv",
-            "--lua-script", "dnshistory.lua",
+            "--no-cookies",
+            "--lua-script", "portalgraphics.lua",
             "-o", ItemInterpolation("%(item_dir)s/wget.log"),
             "--no-check-certificate",
             "--output-document", ItemInterpolation("%(item_dir)s/wget.tmp"),
@@ -179,30 +180,33 @@ class WgetArgs(object):
             "--page-requisites",
             "--timeout", "30",
             "--tries", "inf",
-            "--domains", "dnshistory.org",
+            "--domains", "portalgraphics.net",
             "--span-hosts",
             "--waitretry", "30",
             "--warc-file", ItemInterpolation("%(item_dir)s/%(warc_file_base)s"),
             "--warc-header", "operator: Archive Team",
-            "--warc-header", "dnshistory-dld-script-version: " + VERSION,
-            "--warc-header", ItemInterpolation("dnshistory-user: %(item_name)s"),
+            "--warc-header", "portalgraphics-dld-script-version: " + VERSION,
+            "--warc-header", ItemInterpolation("portalgraphics-user: %(item_name)s"),
         ]
         
         item_name = item['item_name']
         assert ':' in item_name
-        item_type, item_tld, item_value = item_name.split(':', 2)
+        item_type, item_value = item_name.split(':', 2)
         
         item['item_type'] = item_type
         item['item_value'] = item_value
-        item['item_tld'] = item_tld
         
-        assert item_type in ('pages')
+        assert item_type in ('image_id')
 
-        if item_type == 'pages':
-            start, end = [int(num) for num in item_value.split('-', 1)]
-            end += 1
-            for page in range(start, end):
-                wget_args.append('https://dnshistory.org/subdomains/{0}/{1}'.format(page, item_tld))
+        if item_type == 'image_id':
+            wget_args.append('http://www.portalgraphics.net/pg/illust/?image_id={0}'.format(item_value))
+            wget_args.append('http://www.portalgraphics.net/pg/illust/?image_id={0}&lang=ja'.format(item_value))
+            wget_args.append('http://www.portalgraphics.net/pg/illust/?image_id={0}&lang=en'.format(item_value))
+            wget_args.append('http://www.portalgraphics.net/pg/movie/pg_player/res_movie_data.php?mid={0}'.format(item_value))
+            wget_args.append('http://www.portalgraphics.net/pg/movie/pg_player/res_movie_data.php?mid={0}&lang=ja'.format(item_value))
+            wget_args.append('http://www.portalgraphics.net/pg/movie/pg_player/res_movie_data.php?mid={0}&lang=en'.format(item_value))
+            wget_args.append('http://www.portalgraphics.net/pg/movie/address.php?image%5Fid={0}'.format(item_value))
+            wget_args.append('http://www.portalgraphics.net/pg/movie/address.php?image_id={0}'.format(item_value))
         else:
             raise Exception('Unknown item')
         
@@ -221,20 +225,19 @@ class WgetArgs(object):
 # This will be shown in the warrior management panel. The logo should not
 # be too big. The deadline is optional.
 project = Project(
-    title="dnshistory",
+    title="portalgraphics",
     project_html="""
-        <img class="project-logo" alt="Project logo" src="http://archiveteam.org/images/a/ad/Dns-history-org_logo.png" height="50px" title=""/>
-        <h2>dnshistory.org <span class="links"><a href="http://dnshistory.org/">Website</a> &middot; <a href="http://tracker.archiveteam.org/dnshistory/">Leaderboard</a></span></h2>
-        <p>Archiving all records from DNS History.</p>
-    """,
-    utc_deadline=datetime.datetime(2016, 7, 10, 23, 59, 0)
+        <img class="project-logo" alt="Project logo" src="http://archiveteam.org/images/a/a4/Portalgraphics_logo.gif" height="50px" title=""/>
+        <h2>portalgraphics.net <span class="links"><a href="http://www.portalgraphics.net/">Website</a> &middot; <a href="http://tracker.archiveteam.org/portalgraphics/">Leaderboard</a></span></h2>
+        <p>Archiving all uploads to portalgraphics.net by users.</p>
+    """
 )
 
 pipeline = Pipeline(
     CheckIP(),
     GetItemFromTracker("http://%s/%s" % (TRACKER_HOST, TRACKER_ID), downloader,
         VERSION),
-    PrepareDirectories(warc_prefix="dnshistory"),
+    PrepareDirectories(warc_prefix="portalgraphics"),
     WgetDownload(
         WgetArgs(),
         max_tries=2,
@@ -242,9 +245,7 @@ pipeline = Pipeline(
         env={
             "item_dir": ItemValue("item_dir"),
             "item_value": ItemValue("item_value"),
-            "item_tld": ItemValue("item_tld"),
             "item_type": ItemValue("item_type"),
-            "warc_file_base": ItemValue("warc_file_base"),
         }
     ),
     PrepareStatsForTracker(
