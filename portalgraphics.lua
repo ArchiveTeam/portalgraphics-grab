@@ -9,6 +9,8 @@ local item_value = os.getenv('item_value')
 local downloaded = {}
 local addedtolist = {}
 
+local abortgrab = false
+
 for ignore in io.open("ignore-list", "r"):lines() do
   downloaded[ignore] = true
 end
@@ -91,6 +93,9 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   
   if allowed(url) then
     html = read_file(file)
+    if string.match(html, '<br><br><br><a%s+href="/pg/">') then
+      abortgrab = true
+    end
     for newurl in string.gmatch(html, '([^"]+)') do
       checknewurl(newurl)
     end
@@ -127,10 +132,6 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   io.stdout:write(url_count .. "=" .. status_code .. " " .. url["url"] .. ".  \n")
   io.stdout:flush()
 
-  if downloaded[url["url"]] == true then
-    return wget.actions.EXIT
-  end
-
   if (status_code >= 200 and status_code <= 399) then
     if string.match(url.url, "https://") then
       local newurl = string.gsub(url.url, "https://", "http://")
@@ -138,6 +139,10 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     else
       downloaded[url.url] = true
     end
+  end
+
+  if abortgrab == true then
+    return wget.actions.ABORT
   end
   
   if status_code >= 500 or
@@ -170,4 +175,11 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   end
 
   return wget.actions.NOTHING
+end
+
+wget.callbacks.before_exit = function(exit_status, exit_status_string)
+  if abortgrab == true then
+    return wget.exits.IO_FAIL
+  end
+  return exit_status
 end
