@@ -58,7 +58,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = "20160723.01"
+VERSION = "20160726.01"
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'portalgraphics'
 TRACKER_HOST = 'tracker.archiveteam.org'
@@ -196,7 +196,7 @@ class WgetArgs(object):
         item['item_type'] = item_type
         item['item_value'] = item_value
         
-        assert item_type in ('image_id')
+        assert item_type in ('image_id', 'user_id')
 
         if item_type == 'image_id':
             wget_args.append('http://www.portalgraphics.net/pg/illust/?image_id={0}'.format(item_value))
@@ -207,6 +207,8 @@ class WgetArgs(object):
             wget_args.append('http://www.portalgraphics.net/pg/movie/pg_player/res_movie_data.php?mid={0}&lang=en'.format(item_value))
             wget_args.append('http://www.portalgraphics.net/pg/movie/address.php?image%5Fid={0}'.format(item_value))
             wget_args.append('http://www.portalgraphics.net/pg/movie/address.php?image_id={0}'.format(item_value))
+        elif item_type == 'user_id':
+            wget_args.append('http://portalgraphics.net/pg/profile/?user_id={0}'.format(item_value))
         else:
             raise Exception('Unknown item')
         
